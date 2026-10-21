@@ -4568,21 +4568,101 @@ function handleDeleteProduct(e) {
     showDeleteConfirm(product, 'product');
 }
 
+function formatBytes(bytes) {
+    if (!bytes || bytes < 0) return '0 B';
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let i = 0;
+    while (bytes >= 1024 && i < units.length - 1) { bytes /= 1024; i++; }
+    return `${bytes.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
+}
+
+// 可靠触发浏览器下载：必须先把 <a> 插入 DOM，click 后再延迟释放 blob
+// （移动端 iOS Safari / Android WebView 对未插入 DOM 的 a.click() 不会下载）
+function triggerBlobDownload(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.rel = 'noopener';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+        if (a.parentNode) a.parentNode.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, 1500);
+}
+
+function _ensureExportProgressBar() {
+    let bar = document.getElementById('exportProgressBar');
+    if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'exportProgressBar';
+        bar.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:1070;background:#fff;border:1px solid #dee2e6;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,0.15);padding:12px 16px;min-width:280px;max-width:90%;font-size:13px;';
+        bar.innerHTML = '<div id="exportProgressText" style="margin-bottom:8px;color:#333;">正在准备导出...</div>'
+            + '<div style="height:8px;background:#e9ecef;border-radius:4px;overflow:hidden;">'
+            + '<div id="exportProgressFill" style="height:100%;width:0%;background:linear-gradient(90deg,#667eea,#764ba2);transition:width .2s;"></div></div>';
+        document.body.appendChild(bar);
+    }
+    return bar;
+}
+
+function _setExportProgress(text, percent) {
+    const bar = _ensureExportProgressBar();
+    const t = document.getElementById('exportProgressText');
+    const f = document.getElementById('exportProgressFill');
+    if (t) t.textContent = text;
+    if (f && typeof percent === 'number') f.style.width = Math.max(0, Math.min(100, percent)) + '%';
+}
+
+function _hideExportProgress() {
+    const bar = document.getElementById('exportProgressBar');
+    if (bar) bar.remove();
+}
+
+// 流式下载导出文件，实时显示进度，完成后触发保存
+async function downloadExportFile(filename) {
+    const response = await fetch(`${API_BASE_URL}/api/export`, { credentials: 'include' });
+    if (!response.ok) throw new Error(`导出失败（HTTP ${response.status}）`);
+    _setExportProgress('正在导出（含图片），请稍候...', null);
+    let blob;
+    try {
+        const total = parseInt(response.headers.get('Content-Length') || '0', 10);
+        if (response.body && typeof response.body.getReader === 'function') {
+            const reader = response.body.getReader();
+            const chunks = [];
+            let received = 0;
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                chunks.push(value);
+                received += value.length;
+                if (total > 0) {
+                    _setExportProgress(`正在下载 ${formatBytes(received)} / ${formatBytes(total)}`, (received / total) * 100);
+                } else {
+                    _setExportProgress(`已下载 ${formatBytes(received)}...`, null);
+                }
+            }
+            blob = new Blob(chunks, { type: 'application/json' });
+        } else {
+            blob = await response.blob();
+        }
+    } catch (e) {
+        blob = await response.blob();
+    }
+    _setExportProgress(`下载完成，共 ${formatBytes(blob.size)}，正在保存...`, 100);
+    triggerBlobDownload(blob, filename);
+    setTimeout(_hideExportProgress, 1500);
+    return blob;
+}
+
 async function exportUserData() {
     try {
-        showAlert('正在导出数据...', 'info');
-        const response = await fetch(`${API_BASE_URL}/api/export`, { credentials: 'include' });
-        if (!response.ok) throw new Error('导出失败');
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `mydata_${new Date().toISOString().slice(0,10)}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-        showAlert('数据导出成功', 'success');
-    } catch (error) { 
-        showAlert(`导出失败: ${error.message}`, 'danger'); 
+        await downloadExportFile(`mydata_${new Date().toISOString().slice(0,10)}.json`);
+        showAlert('数据导出成功（已包含图片）', 'success');
+    } catch (error) {
+        _hideExportProgress();
+        showAlert(`导出失败: ${error.message}`, 'danger');
     }
 }
 
@@ -4871,17 +4951,12 @@ async function confirmEditCode() {
 
 async function exportData() {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/export`, { credentials: 'include' });
-        if (!response.ok) throw new Error('导出失败');
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `export_${new Date().toISOString().slice(0,10)}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-        showAlert('数据导出成功', 'success');
-    } catch (error) { showAlert(`导出失败: ${error.message}`, 'danger'); }
+        await downloadExportFile(`export_${new Date().toISOString().slice(0,10)}.json`);
+        showAlert('数据导出成功（已包含图片）', 'success');
+    } catch (error) {
+        _hideExportProgress();
+        showAlert(`导出失败: ${error.message}`, 'danger');
+    }
 }
 
 function importData() {
