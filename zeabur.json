@@ -1,0 +1,24 @@
+{
+  "name": "product-expiry-system",
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "npm install",
+    "startCommand": "npm start"
+  },
+  "env": {
+    "NODE_ENV": "production",
+    "DATABASE_DIR": "/data",
+    "PORT": "8080",
+    "ZEABUR": "true",
+    "SESSION_SECRET": "your-secure-session-secret-change-this"
+  },
+  "storage": {
+    "type": "persistent",
+    "mountPath": "/data"
+  },
+  "healthCheck": {
+    "path": "/health",
+    "interval": 30,
+    "timeout": 5
+  }
+}

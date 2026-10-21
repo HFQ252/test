@@ -1,0 +1,2113 @@
+<!-- index.html - 完整的替换文件 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>短保管理</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.2.3/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+   <style>
+    /* 扫描线动画 */
+    @keyframes scanLine {
+        0% {
+            transform: translateY(-50%);
+        }
+        100% {
+            transform: translateY(50%);
+        }
+    }
+    
+    .scanner-overlay {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .scanner-scan-line {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(to bottom, rgba(0,255,0,0.8), rgba(0,255,0,0.2));
+        box-shadow: 0 0 10px rgba(0,255,0,0.8);
+        z-index: 10;
+        animation: scanLine 2s linear infinite;
+    }
+    
+    .scanner-frame {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 200px;
+        height: 200px;
+        border: 3px solid #00ff00;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        z-index: 5;
+    }
+    
+    .scanner-corner-tl {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 20px;
+        height: 20px;
+        border-top: 3px solid #00ff00;
+        border-left: 3px solid #00ff00;
+    }
+    
+    .scanner-corner-tr {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 20px;
+        height: 20px;
+        border-top: 3px solid #00ff00;
+        border-right: 3px solid #00ff00;
+    }
+    
+    .scanner-corner-bl {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 20px;
+        height: 20px;
+        border-bottom: 3px solid #00ff00;
+        border-left: 3px solid #00ff00;
+    }
+    
+    .scanner-corner-br {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 20px;
+        height: 20px;
+        border-bottom: 3px solid #00ff00;
+        border-right: 3px solid #00ff00;
+    }
+    * { box-sizing: border-box; }
+body { background: #f5f5f5; }
+
+.login-wrapper {
+    max-width: 450px;
+    margin: 50px auto;
+    padding: 20px;
+}
+
+.login-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.login-header h1 {
+    font-size: 1.6rem;
+    color: #333;
+}
+
+.nav-login-tabs {
+    margin-bottom: 20px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.nav-login-tabs .nav-link {
+    border: none;
+    color: #666;
+    padding: 10px 16px;
+    background: transparent;
+}
+
+.nav-login-tabs .nav-link.active {
+	    color: #0d6efd;
+	    font-weight: 600;
+	    border-bottom: 2px solid #0d6efd;
+	}
+
+	/* 菜单栏图标和文字间距调整 */
+			.nav-link i {
+			    margin-right: 4px;
+			}
+
+	/* 优化：统一按钮样式 */
+	.btn-sm {
+	    padding: 0.25rem 0.5rem;
+	    font-size: 0.875rem;
+	}
+
+	/* 优化：统一卡片阴影效果 */
+	.card {
+	    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+	    border: none;
+	}
+
+	/* 优化：改进移动端响应式体验 */
+	@media (max-width: 768px) {
+	    .container {
+	        padding: 0 10px;
+	    }
+	    
+	    .card {
+	        margin-bottom: 10px;
+	        border-radius: 8px;
+	    }
+	    
+	    .btn {
+	        font-size: 14px;
+	        padding: 0.5rem 1rem;
+	    }
+	}
+
+	/* 优化：表格样式改进 */
+	.table {
+	    margin-bottom: 0;
+	}
+	
+	.table thead th {
+	    border-top: none;
+	    font-weight: 600;
+	    font-size: 13px;
+	}
+	
+	.table tbody td {
+	    vertical-align: middle;
+	    font-size: 13px;
+	}
+
+	.user-info {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.user-info .btn-outline-light {
+    border-color: rgba(255,255,255,0.5);
+    color: white;
+}
+
+.user-info .btn-outline-light:hover {
+    background: white;
+    color: #667eea;
+}
+
+.expiry-warning-bar {
+    background: #ffc107;
+    color: #856404;
+    padding: 10px 15px;
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 500;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: none;
+}
+
+.expiry-danger-bar {
+    background: #dc3545;
+    color: white;
+}
+
+.scan-btn {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+}
+
+.product-image {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.product-image-sm {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 6px;
+    cursor: pointer;
+}
+    
+.card-image-thumb {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.image-upload-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+    cursor: pointer;
+    background: #f8f9fa;
+}
+
+.image-upload-area:hover {
+    border-color: #0d6efd;
+    background: #e7f1ff;
+}
+
+.image-preview {
+    max-width: 100%;
+    max-height: 150px;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+.section-divider {
+    border-top: 3px solid #ffc107;
+    margin: 25px 0 20px;
+    position: relative;
+}
+
+.section-divider span {
+    position: absolute;
+    top: -12px;
+    left: 0;
+    background: white;
+    padding-right: 15px;
+    font-weight: 600;
+    color: #ffc107;
+}
+
+.admin-only {
+    display: none;
+}
+
+.admin-card {
+    border-left: 4px solid #dc3545;
+}
+
+.auto-save-timer {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #28a745;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: bold;
+    z-index: 1000;
+    animation: slideIn 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.existing-dates-badge {
+    background: #e7f1ff;
+    border-left: 4px solid #0d6efd;
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-top: 8px;
+    font-size: 13px;
+}
+
+.desktop-table {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.desktop-table table {
+    min-width: 800px;
+    width: 100%;
+    white-space: nowrap;
+}
+
+.product-name-cell { 
+    min-width: 100px; 
+    max-width: 150px; 
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sku-cell { 
+    min-width: 80px; 
+    white-space: nowrap; 
+    font-weight: 500; 
+    background-color: #e7f3ff;
+    padding: 5px;
+    border-radius: 4px;
+}
+.date-cell { 
+    min-width: 105px; 
+    white-space: nowrap; 
+    font-family: monospace; 
+    background-color: #fff3cd;
+    padding: 5px;
+    border-radius: 4px;
+}
+.location-cell { 
+    min-width: 100px; 
+    white-space: nowrap; 
+    background-color: #d4edda;
+    padding: 5px;
+    border-radius: 4px;
+}
+.days-cell { 
+    min-width: 70px; 
+    text-align: center; 
+    white-space: nowrap;
+}
+.status-cell {
+    min-width: 60px;
+    white-space: nowrap;
+}
+.image-cell {
+    width: 55px;
+    text-align: center;
+}
+.category-cell {
+    min-width: 80px;
+    white-space: nowrap;
+}
+
+/* 分类筛选器样式 */
+	.category-filter {
+	    padding: 10px;
+	    background: #f8f9fa;
+	    border-radius: 8px;
+	    margin-bottom: 15px;
+	    display: grid;
+	    grid-template-columns: repeat(4, 1fr);
+	    gap: 8px;
+	    align-items: center;
+	}
+	    
+	@media (max-width: 768px) {
+	    .category-filter {
+	        grid-template-columns: repeat(3, 1fr);
+	    }
+	}
+	.category-filter .btn-group {
+	    flex-wrap: wrap;
+	    gap: 8px;
+	}
+	.category-filter .btn {
+	    border-radius: 20px;
+	    padding: 4px 16px;
+	    font-size: 13px;
+	}
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    padding: 15px;
+    flex-wrap: wrap;
+}
+.pagination-container .btn-sm {
+    min-width: 70px;
+}
+.page-info {
+    font-size: 14px;
+    color: #666;
+}
+
+/* 手机端标签页布局 - 隐藏原始标签页，使用左侧菜单栏 */
+@media (max-width: 768px) {
+    .mobile-tab-layout {
+        display: none !important;
+    }
+    
+    /* 手机端导航栏样式优化 */
+    .navbar {
+        position: relative;
+        padding-top: 50px; /* 为左侧菜单按钮留出空间 */
+    }
+    
+    .navbar .container-fluid {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .navbar-brand {
+        text-align: center;
+        font-size: 0.9rem;
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0;
+        padding: 0;
+    }
+    
+    /* 隐藏用户信息在移动端导航栏中，避免拥挤 */
+    .navbar .user-info {
+        display: none;
+    }
+    
+    /* 左侧菜单栏按钮 */
+    .mobile-menu-btn {
+        position: fixed;
+        left: 10px;
+        top: 10px;
+        z-index: 1050;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .mobile-menu-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+    }
+    
+    .mobile-menu-btn:active {
+        transform: scale(0.95);
+    }
+    
+    /* 菜单按钮badge样式 */
+    .menu-btn-badge {
+        background: transparent;
+        color: white;
+        border-radius: 50%;
+        width: 100%;
+        height: 100%;
+        font-size: 14px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: badgePulse 2s infinite;
+    }
+    
+    /* 菜单栏badge样式优化 - 修复布局问题 */
+    .nav-link .badge, .sidebar-menu-item .badge {
+        font-size: 0.7rem;
+        padding: 0.2em 0.4em;
+        min-width: 1.5em;
+        text-align: center;
+    }
+    
+    /* 移动端菜单栏布局优化 */
+    @media (max-width: 768px) {
+        .sidebar-menu-item {
+            position: relative;
+            padding-right: 50px !important;
+        }
+        
+        .sidebar-menu-item .badge {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+    }
+    
+    /* 桌面端隐藏移动端的数字显示 */
+    @media (min-width: 769px) {
+        .mobile-sidebar .badge {
+            display: none !important;
+        }
+    }
+    
+    @keyframes badgePulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.1);
+        }
+    }
+    
+    /* 侧边栏菜单 */
+    .mobile-sidebar {
+        position: fixed;
+        left: -240px;
+        top: 0;
+        width: 190px;
+        height: 100vh;
+        background: white;
+        z-index: 1040;
+        transition: left 0.3s ease;
+        box-shadow: 2px 0 20px rgba(0, 0, 0, 0.15);
+        overflow-y: auto;
+    }
+    
+    .mobile-sidebar.active {
+        left: 0;
+    }
+    
+    /* 侧边栏头部 */
+    .sidebar-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px;
+        text-align: center;
+    }
+    
+    .sidebar-header h5 {
+        margin: 0;
+        font-weight: 600;
+        font-size: 1rem;
+    }
+    
+    .sidebar-header small {
+        opacity: 0.8;
+        font-size: 0.8rem;
+    }
+    
+    /* 侧边栏用户信息 */
+    .sidebar-user-info {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+        padding: 6px 10px;
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-size: 0.85rem;
+    }
+    
+    .sidebar-user-info i {
+        font-size: 1rem;
+    }
+    
+    .sidebar-user-info span {
+        font-weight: 500;
+    }
+    
+    /* 侧边栏菜单项 */
+    .sidebar-menu {
+        padding: 8px 0;
+    }
+    
+    .sidebar-menu-item {
+        padding: 9px 1px;
+        border: none;
+        background: transparent;
+        width: 84%;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 4px;
+        font-size: 14px;
+        color: #333;
+        position: relative;
+    }
+    
+    .sidebar-menu-item:hover {
+        background: #f8f9fa;
+        color: #667eea;
+    }
+    
+    .sidebar-menu-item.active {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        color: #667eea;
+        border-left: 3px solid #667eea;
+    }
+    
+    .sidebar-menu-item i {
+        font-size: 16px;
+        width: 20px;
+        text-align: center;
+        flex-shrink: 0;
+    }
+    
+    /* 侧边栏分隔线 */
+    .sidebar-divider {
+        height: 1px;
+        background: #e0e0e0;
+        margin: 8px 15px;
+    }
+    
+    /* 退出登录按钮样式 */
+    .sidebar-logout-btn {
+        color: #dc3545;
+        font-weight: 500;
+    }
+    
+    .sidebar-logout-btn:hover {
+        background: #fff5f5;
+        color: #c82333;
+    }
+    
+    .sidebar-logout-btn i {
+        color: #dc3545;
+    }
+    
+    .sidebar-logout-btn:hover i {
+        color: #c82333;
+    }
+    
+    /* 侧边栏badge样式 */
+    .sidebar-badge {
+        background: #dc3545;
+        color: white;
+        border-radius: 50%;
+        padding: 2px 8px;
+        font-size: 12px;
+        font-weight: 600;
+        min-width: 20px;
+        text-align: center;
+        margin-left: auto;
+    }
+    
+    .sidebar-badge.clearance-count-badge {
+        background: #ffc107;
+        color: #000;
+    }
+    
+    .sidebar-badge.recent-clearance-count-badge {
+        background: #6f42c1;
+    }
+    
+    /* 遮罩层 */
+    .sidebar-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1030;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .sidebar-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    /* 关闭按钮 */
+    .sidebar-close-btn {
+        position: absolute;
+        right: 15px;
+        top: 15px;
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .sidebar-close-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: rotate(90deg);
+    }
+}
+
+/* 分类按钮网格布局 */
+.category-buttons-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px !important;
+}
+.category-buttons-grid .btn {
+    padding: 6px 8px;
+    font-size: 12px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 992px) {
+    .desktop-table table {
+        min-width: 750px;
+    }
+    .product-name-cell {
+        white-space: normal;
+        word-break: break-word;
+        min-width: 80px;
+        max-width: 120px;
+    }
+    .location-cell {
+        min-width: 80px;
+    }
+}
+
+/* ========== 手机端样式 + 左滑删除 ========== */
+@media (max-width: 768px) {
+    .desktop-table { display: none !important; }
+    .mobile-cards { display: block !important; }
+    
+    .expiring-card {
+        background: white;
+        border-radius: 12px;
+        margin-bottom: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border-left: 5px solid;
+        position: relative;
+        overflow: hidden;
+        touch-action: pan-y pinch-zoom;
+    }
+    
+    /* 卡片内容包装器 - 用于滑动效果 */
+    .expiring-card .card-inner {
+        background: white;
+        border-radius: 12px;
+        padding: 14px;
+        transition: transform 0.2s ease-out;
+        position: relative;
+        z-index: 2;
+    }
+    
+    /* 左滑删除提示箭头 */
+    .swipe-hint {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        opacity: 0.7;
+        transition: opacity 0.2s ease;
+        pointer-events: none;
+        z-index: 3;
+    }
+    
+    .swipe-hint i {
+        font-size: 24px;
+        color: #6c757d;
+        animation: hintBounce 1.5s ease-in-out infinite;
+    }
+    
+    .swipe-hint span {
+        font-size: 10px;
+        color: #fff;
+        background: #dc3545;
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-weight: 500;
+    }
+    
+    @keyframes hintBounce {
+        0%, 100% { transform: translateX(0); }
+        50% { transform: translateX(-5px); }
+    }
+    
+    /* 左滑时隐藏提示 */
+    .expiring-card.swiping .swipe-hint {
+        opacity: 0;
+    }
+    
+    /* 左滑删除背景条 */
+    .expiring-card::after {
+        content: "🗑️ 左滑删除";
+        position: absolute;
+        right: -80px;
+        top: 0;
+        bottom: 0;
+        width: 80px;
+        background: linear-gradient(90deg, #dc3545, #ff4757);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 500;
+        border-radius: 12px;
+        transition: right 0.2s ease-out;
+        z-index: 1;
+        pointer-events: none;
+    }
+    
+    /* 左滑状态 */
+    .expiring-card.swiping::after {
+        right: 0;
+    }
+    
+    /* 卡片状态颜色 */
+    .expiring-card.warning { border-left-color: #ffc107; }
+    .expiring-card.danger { border-left-color: #dc3545; }
+    .expiring-card.normal { border-left-color: #28a745; }
+    
+    /* 删除动画 */
+    	    .expiring-card.delete-animate {
+    	        animation: cardSlideOut 0.3s ease-out forwards !important;
+    	        pointer-events: none !important;
+    	        overflow: hidden;
+    	    }
+	    
+    	    /* 忽略动画（向左滑动） */
+    	    .expiring-card.ignore-animate {
+    	        animation: cardSlideOutLeft 0.3s ease-out forwards !important;
+    	        pointer-events: none !important;
+    	        overflow: hidden;
+    	    }
+	    
+    	    @keyframes cardSlideOutLeft {
+    	        0% {
+    	            transform: translateX(0);
+    	            opacity: 1;
+    	            max-height: 300px;
+    	            margin-bottom: 12px;
+    	        }
+    	        30% {
+    	            transform: translateX(-30%);
+    	            opacity: 0.7;
+    	            background-color: #fff3cd;
+    	        }
+    	        100% {
+    	            transform: translateX(-100%);
+    	            opacity: 0;
+    	            max-height: 0;
+    	            margin-bottom: 0;
+    	            padding: 0;
+    	        }
+    	    }
+	    
+         /* 出清动画（向右滑动） */
+             	    .expiring-card.clear-animate {
+             	        animation: cardSlideOutRight 0.3s ease-out forwards !important;
+             	        pointer-events: none !important;
+             	        overflow: hidden;
+             	    }
+    	    
+             	    @keyframes cardSlideOutRight {
+             	        0% {
+             	            transform: translateX(0);
+             	            opacity: 1;
+             	            max-height: 300px;
+             	            margin-bottom: 12px;
+             	        }
+             	        30% {
+             	            transform: translateX(30%);
+             	            opacity: 0.7;
+             	            background-color: #d1e7dd;
+             	        }
+             	        100% {
+             	            transform: translateX(100%);
+             	            opacity: 0;
+             	            max-height: 0;
+             	            margin-bottom: 0;
+             	            padding: 0;
+             	        }
+             	    }
+    	    
+             	    /* 确认出清淡出动画 */
+             	    .expiring-card.fade-out {
+             	        animation: fadeOut 0.3s ease-out forwards !important;
+             	        pointer-events: none !important;
+             	    }
+    	    
+             	    @keyframes fadeOut {
+             	        0% {
+             	            opacity: 1;
+             	            transform: scale(1);
+             	        }
+             	        100% {
+             	            opacity: 0;
+             	            transform: scale(0.9);
+             	            max-height: 0;
+             	            margin-bottom: 0;
+             	            padding: 0;
+             	        }
+             	    }
+    	    
+             	    @keyframes cardSlideOut {
+        0% {
+            transform: translateX(0);
+            opacity: 1;
+            max-height: 300px;
+            margin-bottom: 12px;
+        }
+        30% {
+            transform: translateX(30%);
+            opacity: 0.7;
+            background-color: #f8d7da;
+        }
+        100% {
+            transform: translateX(100%);
+            opacity: 0;
+            max-height: 0;
+            margin-bottom: 0;
+            padding: 0;
+        }
+    }
+    
+    /* 卡片内部布局 */
+    	    .card-header-row {
+    	        display: flex;
+    	        justify-content: space-between;
+    	        align-items: center;
+    	        margin-bottom: 12px;
+    	    }
+	    
+                .card-sku {
+                    font-size: 1rem;
+                    font-weight: 700;
+                    background: #e7f3ff; /* SKU高亮背景色 */
+                    padding: 4px 10px;
+                    border-radius: 20px;
+                    flex-shrink: 0;
+                }
+                
+                .card-info-value.location-value {
+                    background: #d4edda; /* 库位高亮背景色 */
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    font-weight: 500;
+                }
+                
+                .card-info-value.date-value {
+                    background: #fff3cd; /* 日期高亮背景色 */
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    font-weight: 500;
+                }
+	    
+         .category-badge {
+         	        display: inline-block;
+         	        background: #0d6efd; /* 默认蓝色背景 */
+         	        padding: 3px 10px;
+         	        border-radius: 20px;
+         	        font-size: 0.75rem; /* 与状态框字体大小相同 */
+         	        font-weight: 600;
+         	        color: white;
+         	    }
+	    
+         	    .category-milk { background: #0d6efd; } /* 牛奶类 - 蓝色 */
+         	    .category-bread { background: #fd7e14; } /* 面包类 - 橙色 */
+         	    .category-other { background: #6c757d; } /* 其他类 - 灰色 */
+	    
+         .card-status {
+         	    	    	        font-size: 1.125rem; /* 字体增大1.5倍 */
+         	    	    	        padding: 3px 10px;
+         	    	    	        border-radius: 20px;
+         	    	    	        font-weight: 600;
+         	    	    	    }
+	    
+    	    .status-warning-bg { background: #fff3cd; color: #856404; }
+    	    .status-danger-bg { background: #f8d7da; color: #721c24; }
+    	    .status-normal-bg { background: #d4edda; color: #155724; }
+    
+    
+    
+    .card-status {
+    	    	    	        font-size: 1.125rem; /* 字体增大1.5倍 */
+    	    	    	        padding: 3px 10px;
+    	    	    	        border-radius: 20px;
+    	    	    	        font-weight: 600;
+    	    	    	    }
+    
+    .status-warning-bg { background: #fff3cd; color: #856404; }
+    .status-danger-bg { background: #f8d7da; color: #721c24; }
+    .status-normal-bg { background: #d4edda; color: #155724; }
+    
+    .card-body-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+    
+    .card-info-item {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .card-info-label {
+        font-size: 0.65rem;
+        color: #6c757d;
+        text-transform: uppercase;
+    }
+    
+    .card-info-value {
+        font-size: 0.9rem;
+        font-weight: 600;
+        word-break: break-word;
+    }
+    
+    .card-info-value.name-value {
+        font-size: 0.95rem;
+        font-weight: 600;
+        word-break: break-word;
+        white-space: normal;
+        line-height: 1.3;
+        margin-bottom: 10px;
+    }
+    
+    .location-value {
+        color: #0d6efd;
+        background: #e7f1ff;
+        padding: 3px 8px;
+        border-radius: 6px;
+        display: inline-block;
+    }
+    
+    .days-value {
+        font-size: 1.1rem;
+        font-weight: 700;
+    }
+    
+    .days-unit {
+        font-size: 0.7rem;
+        font-weight: normal;
+        margin-left: 2px;
+    }
+    
+    .date-value {
+        font-family: monospace;
+        font-size: 0.85rem;
+    }
+    
+    /* 高亮样式 - 针对卡片中的特定元素，使用更高优先级 */
+    .card-info-value.location-value {
+        background: #d4edda !important; /* 库位高亮背景色 */
+        padding: 4px 8px !important;
+        border-radius: 4px !important;
+        font-weight: 500 !important;
+    }
+    
+    .card-info-value.date-value {
+        background: #fff3cd !important; /* 日期高亮背景色 */
+        padding: 4px 8px !important;
+        border-radius: 4px !important;
+        font-weight: 500 !important;
+    }
+    
+    .card-sku {
+        font-size: 1rem !important;
+        font-weight: 700 !important;
+        background: #e7f3ff !important; /* SKU高亮背景色 */
+        padding: 4px 10px !important;
+        border-radius: 20px !important;
+        flex-shrink: 0 !important;
+    }
+    
+    .card-image {
+        width: 100%;
+        max-height: 120px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-bottom: 10px;
+    }
+    
+    .category-badge {
+        display: inline-block;
+        background: #e9ecef;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        color: #495057;
+        margin-top: 5px;
+    }
+}
+
+/* PC端表格样式 */
+@media (min-width: 769px) {
+    .mobile-cards { display: none !important; }
+    .desktop-table { display: block !important; }
+}
+
+/* 全局提示框 */
+.global-alert {
+    z-index: 1060;
+    animation: slideDown 0.3s ease;
+    position: fixed;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 300px;
+    max-width: 90%;
+}
+
+@keyframes slideDown {
+    from { transform: translate(-50%, -100%); opacity: 0; }
+    to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+.refresh-btn {
+    position: absolute;
+    right: 15px;
+    top: 10px;
+}
+
+.table-responsive { 
+    overflow-x: auto; 
+    -webkit-overflow-scrolling: touch; 
+}
+
+.auth-code {
+    font-family: monospace;
+    font-size: 1.2rem;
+    font-weight: bold;
+    letter-spacing: 2px;
+    background: #f0f0f0;
+    padding: 5px 10px;
+    border-radius: 6px;
+}
+
+.form-check-label {
+    cursor: pointer;
+}
+
+.timezone-footer {
+    text-align: center;
+    font-size: 11px;
+    color: #999;
+    margin-top: 20px;
+    padding: 10px;
+}
+
+/* 最近删除样式 */
+.deleted-item-card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-left: 4px solid #6c757d;
+}
+.deleted-item-card .deleted-item-name {
+    font-weight: 600;
+    font-size: 1rem;
+}
+.deleted-item-card .deleted-item-info {
+    font-size: 12px;
+    color: #6c757d;
+    margin-top: 5px;
+}
+.deleted-item-card .btn-group-sm {
+	    gap: 5px;
+	    flex-direction: column;
+	}
+	
+	.restore-deleted-btn, .delete-deleted-btn {
+	    min-width: 60px;
+	    padding: 5px 8px;
+	}
+	
+	.restore-deleted-btn i, .delete-deleted-btn i {
+	    font-size: 1rem;
+	}
+	
+	.restore-deleted-btn div, .delete-deleted-btn div {
+	    font-size: 0.75rem;
+	    line-height: 1.2;
+	}
+</style>
+</head>
+<body>
+    <div id="expiryWarningBar" class="expiry-warning-bar">
+        <i class="bi bi-clock-history"></i> <span id="expiryWarningText"></span>
+        <button type="button" class="btn-close btn-close-sm float-end" onclick="document.getElementById('expiryWarningBar').style.display='none'"></button>
+    </div>
+    
+    <div id="autoSaveTimer" class="auto-save-timer" style="display:none">
+        <i class="bi bi-hourglass-split"></i> <span id="timerSeconds">3</span>秒后自动保存...
+        <button type="button" class="btn-close btn-close-white ms-2" style="font-size:10px;" onclick="cancelAutoSave()"></button>
+    </div>
+    
+    <!-- 登录界面 -->
+    <div id="login-container" class="login-wrapper">
+        <div class="login-header">
+            <h1><i class="bi bi-shield-check text-primary"></i> 短保管理</h1>
+            <p class="text-muted">需要授权码才能注册</p>
+        </div>
+        
+        <div class="card login-card">
+            <div class="card-header bg-white">
+                <ul class="nav nav-login-tabs" id="loginTab" role="tablist">
+                    <li class="nav-item"><button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login-pane" type="button" role="tab"><i class="bi bi-box-arrow-in-right"></i> 登录</button></li>
+                    <li class="nav-item"><button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register-pane" type="button" role="tab"><i class="bi bi-person-plus"></i> 注册</button></li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="login-pane">
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-person"></i> 用户名</label>
+                            <input type="text" class="form-control" id="loginUsername" placeholder="请输入用户名" autocomplete="username">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-lock"></i> 密码</label>
+                            <input type="password" class="form-control" id="loginPassword" placeholder="请输入密码" autocomplete="current-password">
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="rememberMe">
+                                <label class="form-check-label" for="rememberMe">
+                                    <i class="bi bi-check2-square"></i> 记住我（30天内免登录）
+                                </label>
+                            </div>
+                        </div>
+                        <div class="d-grid">
+                            <button class="btn btn-primary btn-lg" id="loginBtn">
+                                <i class="bi bi-box-arrow-in-right"></i> 登录
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-pane fade" id="register-pane">
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-person"></i> 用户名</label>
+                            <input type="text" class="form-control" id="registerUsername" placeholder="3-20位字符">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-lock"></i> 密码</label>
+                            <input type="password" class="form-control" id="registerPassword" placeholder="至少6位">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-lock-fill"></i> 确认密码</label>
+                            <input type="password" class="form-control" id="registerConfirmPassword" placeholder="再次输入密码">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-key"></i> 授权码</label>
+                            <input type="text" class="form-control" id="registerAuthCode" placeholder="请输入8位授权码" maxlength="8">
+                            <div class="form-text">请联系管理员获取授权码</div>
+                        </div>
+                        <div class="d-grid"><button class="btn btn-success btn-lg" id="registerBtn"><i class="bi bi-person-plus"></i> 注册</button></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 主应用界面 -->
+    <div id="main-app" class="d-none">
+        <!-- 移动端左侧菜单栏按钮 -->
+        <button class="mobile-menu-btn d-none" id="mobileMenuBtn">
+            <i class="bi bi-list" style="font-size: 20px;"></i>
+            <span class="menu-btn-badge d-none" id="menuBtnBadge">0</span>
+        </button>
+        
+        <!-- 移动端侧边栏菜单 -->
+        <div class="mobile-sidebar d-none" id="mobileSidebar">
+            <button class="sidebar-close-btn" id="sidebarCloseBtn">
+                <i class="bi bi-x-lg"></i>
+            </button>
+            <div class="sidebar-header">
+                <small>快速导航</small>
+                <div class="sidebar-user-info mt-2">
+                    <i class="bi bi-person-circle"></i>
+                    <span id="sidebar-username">用户名</span>
+                </div>
+            </div>
+            <div class="sidebar-menu">
+                <button class="sidebar-menu-item active" data-target="home">
+                    <i class="bi bi-search"></i> 商品查询
+                </button>
+                <button class="sidebar-menu-item" data-target="expiring">
+                    <i class="bi bi-exclamation-triangle"></i> 临期商品 <span id="mobile-expiring-count-badge" class="badge bg-danger ms-1">0</span>
+                </button>
+                <button class="sidebar-menu-item" data-target="clearance">
+                    <i class="bi bi-tags"></i> 建议出清 <span id="mobile-clearance-count-badge" class="badge bg-warning ms-1">0</span>
+                </button>
+                <button class="sidebar-menu-item" data-target="recent-clearance">
+                    <i class="bi bi-clock-history"></i> 待出清表 <span id="mobile-recent-clearance-count-badge" class="badge bg-info ms-1">0</span>
+                </button>
+                <button class="sidebar-menu-item" data-target="all">
+                    <i class="bi bi-list-ul"></i> 所有商品 <span id="mobile-all-count-badge" class="badge bg-secondary ms-1">0</span>
+                </button>
+                <button class="sidebar-menu-item" data-target="add">
+                    <i class="bi bi-plus-circle"></i>    新增/修改
+                </button>
+                <button class="sidebar-menu-item" data-target="deleted">
+                    <i class="bi bi-trash"></i> 最近删除 <span id="mobile-deleted-count-badge" class="badge bg-secondary ms-1">0</span>
+                </button>
+                <button class="sidebar-menu-item" data-target="data">
+                    <i class="bi bi-database-gear"></i> 数据管理 <span id="mobile-database-count-badge" class="badge bg-secondary ms-1">0</span>
+                </button>
+                <button class="sidebar-menu-item" data-target="changepwd">
+                    <i class="bi bi-key"></i> 修改密码
+                </button>
+                <button class="sidebar-menu-item admin-only" data-target="admin">
+                    <i class="bi bi-shield-lock"></i> 系统管理
+                </button>
+                <div class="sidebar-divider"></div>
+                <button class="sidebar-menu-item sidebar-logout-btn" id="sidebarLogoutBtn">
+                    <i class="bi bi-box-arrow-right"></i> 退出登录
+                </button>
+            </div>
+        </div>
+        
+        <!-- 遮罩层 -->
+        <div class="sidebar-overlay d-none" id="sidebarOverlay"></div>
+        
+        <nav class="navbar navbar-light bg-light mb-2">
+            <div class="container-fluid">
+                <span class="navbar-brand"><i class="bi bi-shield-check"></i> 短保管理</span>
+                <div class="user-info">
+                    <span><i class="bi bi-person"></i> <span id="current-username"></span></span>
+                    <div>
+                        <button class="btn btn-sm btn-outline-light me-1" id="changePwdBtn">
+                            <i class="bi bi-key"></i> 修改密码
+                        </button>
+                        <button class="btn btn-sm btn-outline-light" id="logoutBtn" title="右键点击或长按清除保存的登录信息">
+                            <i class="bi bi-box-arrow-right"></i> 退出
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        
+        <div class="container">
+            <ul class="nav nav-tabs mobile-tab-layout" id="myTab" role="tablist">
+                <li class="nav-item"><button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home" type="button" role="tab"><i class="bi bi-search"></i> 商品查询</button></li>
+                <li class="nav-item"><button class="nav-link" id="expiring-tab" data-bs-toggle="tab" data-bs-target="#expiring" type="button" role="tab"><i class="bi bi-exclamation-triangle"></i> 临期商品 <span id="expiring-count-badge" class="badge bg-danger ms-1">0</span></button></li>
+		                <li class="nav-item"><button class="nav-link" id="clearance-tab" data-bs-toggle="tab" data-bs-target="#clearance" type="button" role="tab"><i class="bi bi-tags"></i> 建议出清 <span id="clearance-count-badge" class="badge bg-warning ms-1">0</span></button></li>
+		                <li class="nav-item"><button class="nav-link" id="recent-clearance-tab" data-bs-toggle="tab" data-bs-target="#recent-clearance" type="button" role="tab"><i class="bi bi-clock-history"></i> 待出清表 <span id="recent-clearance-count-badge" class="badge bg-info ms-1">0</span></button></li>
+		                <li class="nav-item"><button class="nav-link" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab"><i class="bi bi-list-ul"></i> 所有商品 <span id="all-count-badge" class="badge bg-secondary ms-1">0</span></button></li>
+                <li class="nav-item"><button class="nav-link" id="add-tab" data-bs-toggle="tab" data-bs-target="#add" type="button" role="tab"><i class="bi bi-plus-circle"></i> 新增商品</button></li>
+                <li class="nav-item"><button class="nav-link" id="deleted-tab" data-bs-toggle="tab" data-bs-target="#deleted" type="button" role="tab"><i class="bi bi-trash"></i> 最近删除 <span id="deleted-count-badge" class="badge bg-secondary ms-1">0</span></button></li>
+                <li class="nav-item"><button class="nav-link" id="data-tab" data-bs-toggle="tab" data-bs-target="#data" type="button" role="tab"><i class="bi bi-database-gear"></i> 数据管理 <span id="database-count-badge" class="badge bg-secondary ms-1">0</span></button></li>
+                <li class="nav-item"><button class="nav-link" id="changepwd-tab" data-bs-toggle="tab" data-bs-target="#changepwd" type="button" role="tab"><i class="bi bi-key"></i> 修改密码</button></li>
+                <li class="nav-item admin-only" id="admin-tab-li"><button class="nav-link" id="admin-tab" data-bs-toggle="tab" data-bs-target="#admin" type="button" role="tab"><i class="bi bi-shield-lock"></i> 系统管理</button></li>
+            </ul>
+            
+            <div class="tab-content mt-3">
+                <!-- 商品查询标签页 -->
+                <div class="tab-pane fade show active" id="home">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="bi bi-box-seam"></i> 添加商品到库存</h5>
+                            <small>扫码或输入SKU，选择生产日期</small>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label">SKU编码 <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="tel" class="form-control" id="skuInput" placeholder="扫码或输入5位SKU" maxlength="5">
+                                        <button class="btn btn-success" type="button" id="scanSkuBtn"><i class="bi bi-upc-scan"></i> 扫码</button>
+                                        <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('skuInput').value='';document.getElementById('skuInput').focus()"><i class="bi bi-x-circle"></i> 清空</button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">商品名称</label>
+                                    <input type="text" class="form-control" id="productName" readonly>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">保质期(天)</label>
+                                    <input type="text" class="form-control" id="shelfLife" readonly>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">临期提醒(天)</label>
+                                    <input type="text" class="form-control" id="reminderDays" readonly>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">商品分类</label>
+                                    <input type="text" class="form-control" id="productCategory" readonly>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">生产日期 <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="productionDate" disabled>
+                                    <div id="existingDateHint" class="existing-dates-badge" style="display:none"></div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">库位</label>
+                                    <div class="form-control bg-light" id="productLocation">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-3">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="bi bi-calculator"></i> 计算结果</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">到期日期</label>
+                                    <div class="form-control bg-light" id="expiryDate">-</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">提醒日期</label>
+                                    <div class="form-control bg-light" id="reminderDate">-</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">剩余天数</label>
+                                    <div class="form-control bg-light" id="remainingDays">-</div>
+                                </div>
+                            </div>
+                            <div class="mt-3" id="statusIndicator"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid mt-3"><button class="btn btn-primary btn-lg" id="saveBtn"><i class="bi bi-save"></i> 保存到库存</button></div>
+                </div>
+                
+                <!-- 建议出清标签页 -->
+                <div class="tab-pane fade" id="clearance">
+                    <div class="section-divider">
+                        <span><i class="bi bi-tags"></i> 建议出清商品</span>
+                    </div>
+                    
+
+
+                    
+                    <!-- 桌面端表格 -->
+                    <div class="desktop-table mb-4">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>商品图片</th>
+                                    <th>SKU</th>
+                                    <th>商品名称</th>
+                                    <th>分类</th>
+                                    <th>库位</th>
+                                    <th>生产日期</th>
+                                    <th>保质期</th>
+                                    <th>剩余天数</th>
+                                    <th>建议出清日期</th>
+                                    <th>出清规则</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clearanceTable">
+                                <!-- 出清商品表格内容 -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- 移动端卡片 -->
+                    <div class="mobile-cards" id="clearanceCardsContainer">
+                        <!-- 出清商品卡片内容 -->
+                    </div>
+
+                    <!-- 分页控件 -->
+                    <div class="pagination-container" id="clearancePagination" style="display: none;">
+                        <button class="btn btn-sm btn-outline-primary" id="clearancePrevBtn">上一页</button>
+                        <span class="page-info" id="clearancePageInfo">第 1 页 / 共 1 页</span>
+                        <button class="btn btn-sm btn-outline-primary" id="clearanceNextBtn">下一页</button>
+                    </div>
+                </div>
+                
+                <!-- 临期商品标签页 -->
+                <div class="tab-pane fade" id="expiring">
+                    <div class="card">
+                        <div class="card-header bg-warning text-white">
+                            <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> 临期/过期商品</h5>
+                            <button class="btn btn-sm btn-light refresh-btn" data-table="expiring"><i class="bi bi-arrow-clockwise"></i> 刷新</button>
+                        </div>
+                        <div class="card-body">
+                            <!-- 分类筛选器 -->
+                            <div class="category-filter">
+                                <span>分类筛选：</span>
+                                <div class="btn-group" id="expiringCategoryFilter">
+                                    <button class="btn btn-outline-secondary btn-sm active" data-category="all">全部</button>
+                                    <button class="btn btn-outline-secondary btn-sm" data-category="牛奶类">🥛 牛奶类</button>
+                                    <button class="btn btn-outline-secondary btn-sm" data-category="面包类">🍞 面包类</button>
+                                    <button class="btn btn-outline-secondary btn-sm" data-category="其他类">📦 其他类</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive desktop-table">
+                                <table class="table table-striped table-hover mb-0">
+                                    <thead class="table-warning">
+                                        <tr><th>图片</th><th>SKU</th><th>商品名称</th><th>分类</th><th>库位</th><th>生产日期</th><th>到期日期</th><th>剩余</th><th>状态</th><th>操作</th></tr>
+                                    </thead>
+                                    <tbody id="expiringTable"></tbody>
+                                </table>
+                            </div>
+                            <div class="mobile-cards" id="expiringCards"></div>
+                        </div>
+                    </div>
+	                </div>
+	                
+	                <!-- 待出清标签页 -->
+	                <div class="tab-pane fade" id="recent-clearance" role="tabpanel" aria-labelledby="recent-clearance-tab">
+	                    <div class="card" style="border-left: 4px solid #6f42c1;">
+	                        <div class="card-header bg-purple text-white">
+	                            <h5 class="mb-0"><i class="bi bi-clock-history"></i> 待出清商品</h5>
+	                            <small>出清的商品会在此保留3天，然后自动删除</small>
+	                            <button class="btn btn-sm btn-outline-light mt-2" id="clearTodayClearanceBtn">
+	                                <i class="bi bi-trash"></i> 清空当天出清
+	                            </button>
+	                        </div>
+	                        <div class="card-body p-0">
+	                            <div class="table-responsive desktop-table">
+	                                <table class="table table-striped table-hover mb-0">
+	                                    <thead class="table-purple">
+	                                        <tr>
+	                                            <th>图片</th>
+	                                            <th>SKU</th>
+	                                            <th>商品名称</th>
+	                                            <th>分类</th>
+	                                            <th>库位</th>
+	                                            <th>生产日期</th>
+	                                            <th>保质期</th>
+	                                            <th>剩余天数</th>
+	                                            <th>建议出清日期</th>
+	                                            <th>出清规则</th>
+	                                            <th>出清时间</th>
+	                                        </tr>
+	                                    </thead>
+	                                    <tbody id="recentClearanceTable">
+	                                        <!-- Recent clearance items will be rendered here -->
+	                                    </tbody>
+	                                </table>
+	                            </div>
+	                            <div class="mobile-cards" id="recentClearanceCardsContainer">
+	                                <!-- Mobile cards for recent clearance -->
+	                            </div>
+	                        </div>
+	                    </div>
+	                </div>
+	                
+	                <!-- 所有商品标签页 -->
+                <div class="tab-pane fade" id="all">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0"><i class="bi bi-list-ul"></i> 所有库存商品</h5>
+                            <button class="btn btn-sm btn-light refresh-btn" data-table="all"><i class="bi bi-arrow-clockwise"></i> 刷新</button>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive desktop-table">
+                                <table class="table table-striped table-hover mb-0">
+                                    <thead class="table-info">
+                                        <tr><th>图片</th><th>SKU</th><th>商品名称</th><th>分类</th><th>库位</th><th>生产日期</th><th>到期日期</th><th>剩余</th><th>状态</th><th>操作</th></tr>
+                                    </thead>
+                                    <tbody id="allTable"></tbody>
+                                </table>
+                                <!-- 分页控件 -->
+                                <div id="allPagination" class="pagination-container"></div>
+                            </div>
+                            <div class="mobile-cards" id="allCards"></div>
+                            <div id="allPaginationMobile" class="pagination-container mobile-pagination" style="display:none"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 新增商品标签页 -->
+                <div class="tab-pane fade" id="add">
+                    <div class="card mb-3" style="border-left: 4px solid #17a2b8;">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0"><i class="bi bi-search"></i> 通过SKU查询/修改商品</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="searchSku" placeholder="扫码或输入5位SKU" maxlength="5">
+                                <button class="btn btn-success" type="button" id="scanSearchSkuBtn"><i class="bi bi-upc-scan"></i> 扫码</button>
+                                <button class="btn btn-primary" type="button" id="searchBtn"><i class="bi bi-search"></i> 查询</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-divider"><span>添加/修改商品（图片所有用户共享）</span></div>
+                    
+                    <div class="card">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0"><i class="bi bi-box"></i> 商品信息</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">SKU <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="newSku" placeholder="5位SKU" maxlength="5">
+                                        <button class="btn btn-success" type="button" id="scanNewSkuBtn"><i class="bi bi-upc-scan"></i> 扫码</button>
+                                    </div>
+                                </div>
+                                <div class="col-md-8">
+                                    <label class="form-label">商品名称 <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="newName" placeholder="输入商品名称">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">保质期(天) <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="newShelfLife" placeholder="天数" min="1">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">临期提醒(天) <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="newReminderDays" placeholder="提醒天数" min="0">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">商品分类 <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="newCategory">
+                                        <option value="牛奶类">🥛 牛奶类</option>
+                                        <option value="面包类">🍞 面包类</option>
+                                        <option value="其他类">📦 其他类</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">存放库位 <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="newLocation" placeholder="如：A区1排1层">
+                                        <button class="btn btn-success" type="button" id="scanLocationBtn"><i class="bi bi-upc-scan"></i> 扫码</button>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">商品图片（可选，图片所有用户共享，请勿随意更改）</label>
+                                    <label class="form-label">新用户请先不要上传图片，添加商品时会按sku自动匹配图片</label>
+                                    <div class="image-upload-area" id="imageUploadArea">
+                                        <i class="bi bi-image" style="font-size: 2rem;"></i>
+                                        <p class="mb-0 mt-2">点击或拖拽上传图片</p>
+                                        <small>图片请按sku（条形码后5位数字）命名，支持 JPG/PNG，不超过5MB，建议上传图片前进行图片压缩</small>
+                                        <input type="file" id="productImageInput" accept="image/*" style="display:none">
+                                        <div id="imagePreviewContainer"></div>
+                                    </div>
+                                    <div class="d-flex gap-2 mt-2">
+                                        <button class="btn btn-outline-primary" id="cameraCaptureBtn">
+                                            <i class="bi bi-camera"></i> 拍照上传
+                                        </button>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-danger mt-2" id="removeImageBtn" style="display:none"><i class="bi bi-trash"></i> 删除图片</button>
+                                </div>
+                                <div class="col-12">
+                                    <div class="d-flex gap-2 justify-content-end">
+                                        <button class="btn btn-primary" id="addProductBtn"><i class="bi bi-check-circle"></i> 添加商品</button>
+                                        <button class="btn btn-warning d-none" id="updateProductBtn"><i class="bi bi-pencil"></i> 更新商品</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-3">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="bi bi-database"></i> 商品数据库</h5>
+                            <button class="btn btn-sm btn-outline-secondary refresh-btn" data-table="database"><i class="bi bi-arrow-clockwise"></i> 刷新</button>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover mb-0">
+                                    <thead>
+                                        <tr><th>图片</th><th>SKU</th><th>商品名称</th><th>分类</th><th>保质期</th><th>提醒</th><th>库位</th><th>操作</th></tr>
+                                    </thead>
+                                    <tbody id="productDatabaseTable"></tbody>
+                                </table>
+                                <!-- 分页控件 -->
+                                <div id="databasePagination" class="pagination-container"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 最近删除标签页 -->
+                <div class="tab-pane fade" id="deleted">
+                    <div class="card">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0"><i class="bi bi-trash"></i> 最近删除记录</h5>
+                            <button class="btn btn-sm btn-light refresh-btn" id="refreshDeletedBtn"><i class="bi bi-arrow-clockwise"></i> 刷新</button>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3 text-end">
+                                <button class="btn btn-danger btn-sm" id="clearAllDeletedBtn">
+                                    <i class="bi bi-trash3"></i> 清空全部
+                                </button>
+                                <small class="text-muted ms-2">记录保存3天，超时自动删除</small>
+                            </div>
+                            <div id="deletedListContainer" class="deleted-list">
+                                <div class="text-center py-5 text-muted">
+                                    <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                                    <p class="mt-2">暂无删除记录</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 修改密码标签页 -->
+                <div class="tab-pane fade" id="changepwd">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0"><i class="bi bi-key"></i> 修改密码</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="container" style="max-width: 500px;">
+                                <div class="mb-3">
+                                    <label class="form-label"><i class="bi bi-lock"></i> 当前密码</label>
+                                    <input type="password" class="form-control" id="currentPassword" placeholder="请输入当前密码">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label"><i class="bi bi-lock-fill"></i> 新密码</label>
+                                    <input type="password" class="form-control" id="newPassword" placeholder="至少6位字符">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label"><i class="bi bi-lock-fill"></i> 确认新密码</label>
+                                    <input type="password" class="form-control" id="confirmPassword" placeholder="再次输入新密码">
+                                </div>
+                                <div class="d-grid">
+                                    <button class="btn btn-primary btn-lg" id="changePasswordSubmitBtn">
+                                        <i class="bi bi-check-circle"></i> 修改密码
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 数据管理标签页（普通用户） -->
+                <div class="tab-pane fade" id="data">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0"><i class="bi bi-download"></i> 导出我的数据</h5>
+                                </div>
+                                <div class="card-body text-center">
+                                    <p>导出您的商品数据库和库存记录（JSON格式）</p>
+                                    <button class="btn btn-success" id="exportUserDataBtn">
+                                        <i class="bi bi-download"></i> 导出数据
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-warning">
+                                    <h5 class="mb-0"><i class="bi bi-upload"></i> 导入我的数据</h5>
+                                </div>
+                                <div class="card-body text-center">
+                                    <p>导入之前导出的JSON文件（会合并数据）</p>
+                                    <input type="file" id="importUserFileInput" accept=".json" style="display:none">
+                                    <button class="btn btn-warning" id="importUserDataBtn">
+                                        <i class="bi bi-upload"></i> 选择文件导入
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-12 mt-3">
+                            <div class="card">
+                                <div class="card-header bg-danger text-white">
+                                    <h5 class="mb-0"><i class="bi bi-trash"></i> 危险操作</h5>
+                                </div>
+                                <div class="card-body text-center">
+                                    <p class="text-muted">清空您所有的商品数据和库存记录（不可恢复）</p>
+                                    <button class="btn btn-danger" id="resetUserDataBtn">
+                                        <i class="bi bi-exclamation-triangle"></i> 清空我的所有数据
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 系统管理标签页（仅管理员可见） -->
+                <div class="tab-pane fade" id="admin">
+                    <ul class="nav nav-pills mb-3">
+                        <li class="nav-item"><button class="nav-link active" data-admin-tab="users"><i class="bi bi-people"></i> 用户管理</button></li>
+                        <li class="nav-item"><button class="nav-link" data-admin-tab="codes"><i class="bi bi-key"></i> 授权码管理</button></li>
+                        <li class="nav-item"><button class="nav-link" data-admin-tab="logs"><i class="bi bi-journal"></i> 操作日志</button></li>
+                        <li class="nav-item"><button class="nav-link" data-admin-tab="import-export"><i class="bi bi-arrow-left-right"></i> 导入导出</button></li>
+                    </ul>
+                    
+                    <div id="admin-users" class="admin-panel">
+                        <div class="card">
+                            <div class="card-header bg-danger text-white">
+                                <h5 class="mb-0"><i class="bi bi-people"></i> 用户列表</h5>
+                                <button class="btn btn-sm btn-light refresh-btn" id="refreshUsersBtn"><i class="bi bi-arrow-clockwise"></i> 刷新</button>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-striped mb-0">
+                                        <thead><tr><th>ID</th><th>用户名</th><th>角色</th><th>注册时间</th><th>最后登录</th><th>有效期</th><th>操作</th></tr></thead>
+                                        <tbody id="usersTable"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="admin-codes" class="admin-panel" style="display:none">
+                        <div class="card mb-3">
+                            <div class="card-header bg-warning">
+                                <h5 class="mb-0"><i class="bi bi-plus-circle"></i> 生成授权码</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3 align-items-end">
+                                    <div class="col-md-6">
+                                        <label class="form-label">有效期至</label>
+                                        <input type="date" class="form-control" id="newCodeValidUntil">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <button class="btn btn-primary" id="generateCodeBtn"><i class="bi bi-key"></i> 生成授权码</button>
+                                    </div>
+                                </div>
+                                <div id="newCodeResult" class="mt-3 alert alert-info" style="display:none"></div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0"><i class="bi bi-list"></i> 授权码列表</h5>
+                                <button class="btn btn-sm btn-light refresh-btn" id="refreshCodesBtn"><i class="bi bi-arrow-clockwise"></i> 刷新</button>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-striped mb-0">
+                                        <thead><tr><th>授权码</th><th>创建人</th><th>有效期</th><th>状态</th><th>使用人</th><th>操作</th></tr></thead>
+                                        <tbody id="codesTable"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="admin-logs" class="admin-panel" style="display:none">
+                        <div class="card">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0"><i class="bi bi-journal"></i> 操作日志</h5>
+                                <button class="btn btn-sm btn-light refresh-btn" id="refreshLogsBtn"><i class="bi bi-arrow-clockwise"></i> 刷新</button>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-striped mb-0">
+                                        <thead><tr><th>时间</th><th>管理员</th><th>操作</th><th>目标</th><th>详情</th></tr></thead>
+                                        <tbody id="logsTable"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="admin-import-export" class="admin-panel" style="display:none">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-success text-white">
+                                        <h5 class="mb-0"><i class="bi bi-download"></i> 导出数据</h5>
+                                    </div>
+                                    <div class="card-body text-center">
+                                        <p>导出您的商品数据库和库存记录</p>
+                                        <button class="btn btn-success" id="exportDataBtn"><i class="bi bi-download"></i> 导出JSON文件</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-warning">
+                                        <h5 class="mb-0"><i class="bi bi-upload"></i> 导入数据</h5>
+                                    </div>
+                                    <div class="card-body text-center">
+                                        <p>导入之前导出的JSON文件</p>
+                                        <input type="file" id="importFileInput" accept=".json" style="display:none">
+                                        <button class="btn btn-warning" id="importDataBtn"><i class="bi bi-upload"></i> 选择文件导入</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 扫码模态框 -->
+    <div class="modal fade" id="scannerModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="bi bi-upc-scan"></i> 扫描条形码</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div id="qr-reader" class="scanner-overlay" style="width:100%; position: relative;">
+                        <div class="scanner-scan-line"></div>
+                        <div class="scanner-frame">
+                            <div class="scanner-corner-tl"></div>
+                            <div class="scanner-corner-tr"></div>
+                            <div class="scanner-corner-bl"></div>
+                            <div class="scanner-corner-br"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button class="btn btn-danger" id="stopScannerBtn">停止扫描</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 图片预览模态框 -->
+    <div class="modal fade" id="imagePreviewModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">商品图片</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body text-center"><img id="previewImage" src="" style="max-width:100%;max-height:70vh"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 修改密码模态框 -->
+    <div class="modal fade" id="changePwdModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="bi bi-key"></i> 修改密码</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">当前密码</label>
+                        <input type="password" class="form-control" id="oldPassword" placeholder="请输入当前密码">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">新密码</label>
+                        <input type="password" class="form-control" id="newPassword" placeholder="至少6位">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">确认新密码</label>
+                        <input type="password" class="form-control" id="confirmNewPassword" placeholder="再次输入新密码">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button class="btn btn-primary" id="confirmChangePwdBtn">确认修改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 密码验证模态框（清空数据用） -->
+    <div class="modal fade" id="verifyPasswordModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="bi bi-shield-lock"></i> 安全验证</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i> 
+                        <strong>警告：此操作将清空您所有的商品数据和库存记录，不可恢复！</strong>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">请输入您的登录密码以确认操作</label>
+                        <input type="password" class="form-control" id="verifyPassword" placeholder="请输入密码">
+                        <div class="form-text text-muted">输入正确密码后才会执行清空操作</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button class="btn btn-danger" id="confirmVerifyResetBtn">
+                        <i class="bi bi-trash"></i> 确认清空
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 密码重置模态框 -->
+    <div class="modal fade" id="resetPasswordModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning"><h5 class="modal-title">重置用户密码</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <input type="hidden" id="resetUserId">
+                    <div class="mb-3"><label class="form-label">新密码</label><input type="password" class="form-control" id="resetNewPassword" placeholder="至少6位"></div>
+                    <div class="mb-3"><label class="form-label">确认密码</label><input type="password" class="form-control" id="resetConfirmPassword" placeholder="再次输入"></div>
+                </div>
+                <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">取消</button><button class="btn btn-warning" id="confirmResetPasswordBtn">确认重置</button></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 有效期修改模态框 -->
+    <div class="modal fade" id="validityModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white"><h5 class="modal-title">修改有效期</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <input type="hidden" id="validityUserId">
+                    <div class="mb-3"><label class="form-label">有效期至</label><input type="date" class="form-control" id="validityDate"></div>
+                </div>
+                <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">取消</button><button class="btn btn-info" id="confirmValidityBtn">确认修改</button></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 授权码编辑模态框 -->
+    <div class="modal fade" id="editCodeModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning"><h5 class="modal-title">编辑授权码</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <input type="hidden" id="editCodeId">
+                    <div class="mb-3"><label class="form-label">有效期至</label><input type="date" class="form-control" id="editCodeValidUntil"></div>
+                    <div class="mb-3"><label class="form-label">状态</label><select class="form-control" id="editCodeStatus"><option value="active">有效</option><option value="expired">失效</option></select></div>
+                </div>
+                <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">取消</button><button class="btn btn-warning" id="confirmEditCodeBtn">确认修改</button></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 删除确认模态框 -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="modalTitle">确认删除</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="modalBody">
+                    确定要删除这条记录吗？
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                        <i class="bi bi-trash"></i> 确认删除
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal fade" id="duplicateModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning"><h5 class="modal-title">发现重复记录</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body" id="duplicateBody"></div>
+                <div class="modal-footer"><button class="btn btn-secondary" onclick="cancelDuplicate()">取消</button><button class="btn btn-warning" onclick="confirmDuplicate()">继续添加</button></div>
+            </div>
+        </div>
+    </div>
+    
+
+
+
+    
+    <footer id="pageFooter" style="text-align: center; padding: 10px; font-size: 12px; color: #666; background: #f8f9fa; border-top: 1px solid #dee2e6; margin-top: 20px;">
+        时区：北京时间 (UTC+8) | 临期判断基于本地时间 | 上次刷新时间：<span id="lastRefreshTime"></span>
+    </footer>
+
+    <script src="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.2.3/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
